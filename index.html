@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>INDI Bank</title>
+<style>
+  :root{ --bg:#f6f8fb; --ink:#0c1a2a; --muted:#5b6b7b; --primary:#0A7F5A; --accent:#0b3a97; --card:#ffffff; --radius:16px; --shadow:0px 6px 22px rgba(0,0,0,.12) }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .hidden{display:none !important}
+  header{background:#0A7F5A;color:#fff;padding:14px 20px;font-size:20px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .hdr-right .mail{font-size:12px;opacity:.85}
+  .hero{background:linear-gradient(90deg,#0b3a97,#0A7F5A);color:#fff;padding:50px 40px;font-size:26px;font-weight:600}
+  .sub{font-size:16px;font-weight:300;margin-top:8px}
+  .container{max-width:1300px;margin:auto;padding:20px}
+  .card{background:#fff;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:20px}
+  input,button{padding:12px;border-radius:10px;border:1px solid #d9e1ee;width:100%;margin-top:12px;font-size:15px}
+  button{background:#0A7F5A;color:#fff;cursor:pointer;border:none}
+  .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+  .offer{padding:24px}
+  .tag{display:inline-block;background:#eef3fa;color:#2c3f57;border:1px solid #dfe7f1;border-radius:999px;padding:6px 10px;font-size:12px;margin-right:6px}
+  .list h3{margin:6px 0 10px;color:#42516a}
+  .alt-offers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .alt{border:1px solid #e7ecf5;border-radius:10px;padding:12px}
+  .alt .t{font-weight:700;color:#213049}
+  .alt .b{font-size:12px;color:#5b6b7b}
+  .cta-row{display:flex;gap:10px;align-items:center;margin-top:12px}
+  .btn-secondary{background:#e6eef9;color:#0b3a97}
+  .kpi{display:flex;gap:24px;margin-top:30px}
+  .kpi-box{background:#fff;text-align:center;border-radius:14px;padding:18px;box-shadow:0px 6px 18px rgba(0,0,0,.1)}
+  .kpi-val{font-size:22px;font-weight:800;color:#0b3a97}
+  .table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}
+  th,td{border-top:1px solid #e3e6ee;padding:10px 12px;text-align:left}
+</style>
+</head>
+<body>
+  <header>
+    INDI Bank
+    <span id="hdrRight" class="hdr-right hidden">
+      <span id="logoutLink" style="font-size:14px;cursor:pointer" onclick="logout()">Logout</span>
+      <span class="mail" id="userEmail">Anant.2.Singh@coforge.com</span>
+    </span>
+  </header>
+
+  <div id="login" class="container">
+    <div class="card" style="max-width:420px;margin:auto;">
+      <h2>Login</h2>
+      <input id="cid" placeholder="Customer ID" />
+      <input id="pwd" type="password" placeholder="Password" />
+      <button onclick="login()">Sign in</button>
+      <p id="err" style="color:#D22D2D;font-size:14px"></p>
+    </div>
+  </div>
+
+  <div id="dash" class="hidden">
+    <div class="hero">Welcome, <span id="greetName">Anant Singh</span><div class="sub">Here is your personalised offer based on your recent activity and profile.</div></div>
+    <div class="container">
+      <div class="wrap">
+        <div class="grid">
+          <div class="card offer">
+            <div class="tag" id="offerTag">Next Best Offer</div>
+            <h2 id="offerTitle">—</h2>
+            <p id="offerDesc">—</p>
+            <div class="tag" id="offerBenefit">—</div>
+            <div class="list">
+              <h3>Why this offer?</h3>
+              <ul id="reasons"></ul>
+            </div>
+            <div class="cta-row">
+              <button id="accept">Accept offer</button>
+              <button class="btn-secondary" id="later">Remind me later</button>
+            </div>
+          </div>
+          <div class="card list">
+            <h3>Top alternatives</h3>
+            <div id="alts" class="alt-offers"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-box"><div class="kpi-val" id="kpiAcc">1</div>Accounts</div>
+        <div class="kpi-box"><div class="kpi-val" id="kpiTxn">0</div>Transactions</div>
+        <div class="kpi-box"><div class="kpi-val" id="kpiMer">0</div>Merchants</div>
+      </div>
+
+      <div class="card">
+        <h3>Recent Activity</h3>
+        <table class="table" id="tbl"></table>
+      </div>
+    </div>
+  </div>
+
+<script>
+const DATA_CC = [
+  {"Transaction Id":"EU-TXN-6100","Card Type":"Visa Platinum","Merchant":"Virgin Australia","Amount":245.10,"Status":"APPROVED","Transaction Date":"2026-01-20 12:34:00","Merchant type":"Airline"},
+  {"Transaction Id":"EU-TXN-6101","Card Type":"Visa Platinum","Merchant":"Lufthansa","Amount":210.20,"Status":"APPROVED","Transaction Date":"2026-01-18 08:35:00","Merchant type":"Airline"},
+  {"Transaction Id":"EU-TXN-6102","Card Type":"Visa Platinum","Merchant":"Ryanair","Amount":95.35,"Status":"APPROVED","Transaction Date":"2026-01-16 21:14:00","Merchant type":"Airline"},
+  {"Transaction Id":"EU-TXN-6103","Card Type":"Visa Platinum","Merchant":"Qantas","Amount":280.50,"Status":"SUCCESS","Transaction Date":"2026-01-12 10:05:00","Merchant type":"Airline"},
+  {"Transaction Id":"EU-TXN-6104","Card Type":"Visa Platinum","Merchant":"Emirates","Amount":430.00,"Status":"SETTLED","Transaction Date":"2026-01-10 06:40:00","Merchant type":"Airline"},
+  {"Transaction Id":"EU-TXN-6105","Card Type":"Visa Platinum","Merchant":"Vodafone DE","Amount":97.29,"Status":"APPROVED","Transaction Date":"2026-01-09 11:46:00","Merchant type":"Telecom"},
+  {"Transaction Id":"EU-TXN-6106","Card Type":"Visa Platinum","Merchant":"IKEA","Amount":149.90,"Status":"APPROVED","Transaction Date":"2026-01-11 17:08:00","Merchant type":"Retail"},
+  {"Transaction Id":"EU-TXN-6107","Card Type":"Visa Platinum","Merchant":"Booking.com","Amount":180.00,"Status":"SETTLED","Transaction Date":"2026-01-14 12:05:00","Merchant type":"Travel"},
+  {"Transaction Id":"EU-TXN-6108","Card Type":"Visa Platinum","Merchant":"Lidl","Amount":62.80,"Status":"APPROVED","Transaction Date":"2026-01-22 13:21:00","Merchant type":"Retail"},
+  {"Transaction Id":"EU-TXN-6109","Card Type":"Visa Platinum","Merchant":"Shell","Amount":45.35,"Status":"SETTLED","Transaction Date":"2026-01-24 18:10:00","Merchant type":"Travel"},
+  {"Transaction Id":"EU-TXN-6110","Card Type":"Visa Platinum","Merchant":"Starbucks","Amount":15.66,"Status":"SUCCESS","Transaction Date":"2026-01-26 10:22:00","Merchant type":"Retail"},
+  {"Transaction Id":"EU-TXN-6111","Card Type":"Visa Platinum","Merchant":"ALDI","Amount":35.40,"Status":"SUCCESS","Transaction Date":"2026-01-28 09:00:00","Merchant type":"Retail"}
+];
+
+function renderOfferForPassword(pw){
+  const loan = {title:'Personal Loan @ Special Rate',desc:'Get a pre-approved personal loan instantly with attractive interest rates.',benefit:'Low documentation',reasons:['High card usage','Good repayment behavior'],alts:[{title:'Top‑Up Personal Loan',desc:'Get additional loan instantly.',benefit:'Instant top‑up'},{title:'Holiday Loan Offer',desc:'Special travel loan rates.',benefit:'Seasonal rates'},{title:'Debt Consolidation',desc:'Combine all EMIs into one.',benefit:'Lower EMI'},{title:'Loan EMI Protector',desc:'Insurance cover for EMIs.',benefit:'EMI cover'}]};
+  const cc   = {title:'Airline Miles Credit Card',desc:'Earn accelerated miles, complimentary lounge access, and travel perks on flights.',benefit:'Accelerated miles',reasons:['Frequent flight bookings','Travel-related transactions'],alts:[{title:'UPI Super Cashback Pack',desc:'Cashback on UPI spends.',benefit:'Up to ₹250/month'},{title:'Premium Credit Shield',desc:'Insurance for card transactions.',benefit:'Fraud cover'},{title:'Travel Miles Booster',desc:'Earn extra miles on flights.',benefit:'Bonus miles'},{title:'Lounge Access Upgrade',desc:'International lounge visits.',benefit:'2 free visits'}]};
+  const cfg = (pw==='Pass@223') ? cc : loan;
+  offerTag.textContent='Next Best Offer';
+  offerTitle.textContent=cfg.title;
+  offerDesc.textContent=cfg.desc;
+  offerBenefit.textContent=cfg.benefit;
+  reasons.innerHTML = cfg.reasons.map(r=>`<li>${r}</li>`).join('');
+  alts.innerHTML = cfg.alts.map(a=>`<div class="alt"><div class="t">${a.title}</div><div class="b">${a.desc}</div><div class="b" style="margin-top:6px"><span class="tag">${a.benefit}</span></div></div>`).join('');
+}
+
+function login(){
+  const cid=document.getElementById('cid').value.trim();
+  const pw=document.getElementById('pwd').value.trim();
+  const err=document.getElementById('err');
+  err.textContent='';
+  if(cid!=='345345'){err.textContent='Invalid Customer ID';return;}
+  if(pw!=='Pass@123' && pw!=='Pass@223'){err.textContent='Invalid Password';return;}
+
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('dash').classList.remove('hidden');
+  document.getElementById('hdrRight').classList.remove('hidden');
+
+  renderOfferForPassword(pw);
+
+  // Use CC dataset for both modes; for Non-CC remove 20 Jan
+  let list = DATA_CC.slice();
+  if(pw==='Pass@123'){
+    list = list.filter(r=> !String(r['Transaction Date']).startsWith('2026-01-20'));
+  }
+
+  // Interleave Airline and non-Airline for both modes; if CC, ensure 20 Jan Virgin Australia stays first
+  if(pw==='Pass@223'){
+    const idx = list.findIndex(r=> String(r['Merchant'])==='Virgin Australia' && String(r['Transaction Date']).startsWith('2026-01-20'));
+    let ordered=[]; if(idx>=0){ ordered.push(list[idx]); list.splice(idx,1);} 
+    const air = list.filter(r=> String(r['Merchant type'])==='Airline');
+    const non = list.filter(r=> String(r['Merchant type'])!=='Airline');
+    const maxLen=Math.max(air.length,non.length);
+    for(let i=0;i<maxLen;i++){ if(non[i]) ordered.push(non[i]); if(air[i]) ordered.push(air[i]); }
+    list=ordered;
+  } else {
+    const air = list.filter(r=> String(r['Merchant type'])==='Airline');
+    const non = list.filter(r=> String(r['Merchant type'])!=='Airline');
+    const maxLen=Math.max(air.length,non.length);
+    let ordered=[]; for(let i=0;i<maxLen;i++){ if(non[i]) ordered.push(non[i]); if(air[i]) ordered.push(air[i]); }
+    list=ordered;
+  }
+
+  // KPIs
+  document.getElementById('kpiAcc').textContent='1';
+  document.getElementById('kpiTxn').textContent=list.length;
+  document.getElementById('kpiMer').textContent=[...new Set(list.map(r=>r['Merchant']))].length;
+
+  // Table with YYYY-MM-DD only
+  let tbl = `
+  <tr><th>Transaction Id</th><th>Card Type</th><th>Merchant</th><th>Merchant type</th><th>Amount</th><th>Status</th><th>Transaction Date</th></tr>`;
+  list.forEach(r=>{ const d=(String(r['Transaction Date'])||'').slice(0,10); tbl+=`<tr><td>${r['Transaction Id']}</td><td>${r['Card Type']}</td><td>${r['Merchant']}</td><td>${r['Merchant type']}</td><td>${r['Amount']} EUR</td><td>${r['Status']}</td><td>${d}</td></tr>`; });
+  document.getElementById('tbl').innerHTML=tbl;
+}
+
+function logout(){ document.getElementById('hdrRight').classList.add('hidden'); location.reload(); }
+</script>
+</body>
+</html>
